@@ -1,0 +1,42 @@
+name: Trigger auto deployment for k6-container-app
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - 'src/**'
+    - '.github/workflows/k6-container-app-AutoDeployTrigger-af2f4f51-e204-4063-86ca-a0448a259809.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:
+      
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.K6CONTAINERAPP_AZURE_CREDENTIALS }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }}/src 
+          registryUrl: ca04b73a5ba0acr.azurecr.io
+          registryUsername: ${{ secrets.K6CONTAINERAPP_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.K6CONTAINERAPP_REGISTRY_PASSWORD }}
+          containerAppName: k6-container-app
+          resourceGroup: k6-rg
+          imageToBuild: ca04b73a5ba0acr.azurecr.io/k6-container-app:${{ github.sha }}
+          dockerfilePath: Dockerfile
+
+     
+
